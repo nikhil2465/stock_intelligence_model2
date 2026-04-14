@@ -184,10 +184,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     amount          DECIMAL(12,2) NOT NULL,
     paid_amount     DECIMAL(12,2) DEFAULT 0,
     outstanding     DECIMAL(12,2) GENERATED ALWAYS AS (amount - paid_amount) STORED,
-    days_overdue    INT          GENERATED ALWAYS AS (
-                        CASE WHEN due_date < CURDATE() AND (amount - paid_amount) > 0
-                             THEN DATEDIFF(CURDATE(), due_date) ELSE 0 END
-                    ) STORED,
+    -- days_overdue is computed in the view (CURDATE() not allowed in stored generated columns)
     status          ENUM('UNPAID','PARTIAL','PAID','OVERDUE') DEFAULT 'UNPAID',
     FOREIGN KEY (customer_id)  REFERENCES customers(customer_id),
     FOREIGN KEY (order_id)     REFERENCES customer_orders(order_id)
@@ -287,16 +284,19 @@ CREATE OR REPLACE VIEW v_overdue_invoices AS
 SELECT
     c.customer_name, c.segment, c.phone,
     i.invoice_number, i.invoice_date, i.due_date,
-    i.amount, i.paid_amount, i.outstanding, i.days_overdue,
+    i.amount, i.paid_amount, i.outstanding,
+    CASE WHEN i.due_date < CURDATE() AND i.outstanding > 0
+         THEN DATEDIFF(CURDATE(), i.due_date) ELSE 0
+    END AS days_overdue,
     CASE
-        WHEN i.days_overdue > 60 THEN 'HIGH'
-        WHEN i.days_overdue > 30 THEN 'MEDIUM'
+        WHEN DATEDIFF(CURDATE(), i.due_date) > 60 THEN 'HIGH'
+        WHEN DATEDIFF(CURDATE(), i.due_date) > 30 THEN 'MEDIUM'
         ELSE 'LOW'
     END AS risk_level
 FROM invoices i
 JOIN customers c ON i.customer_id = c.customer_id
-WHERE i.outstanding > 0 AND i.days_overdue > 0
-ORDER BY i.days_overdue DESC;
+WHERE i.outstanding > 0 AND i.due_date < CURDATE()
+ORDER BY days_overdue DESC;
 
 CREATE OR REPLACE VIEW v_supplier_scorecard AS
 SELECT
