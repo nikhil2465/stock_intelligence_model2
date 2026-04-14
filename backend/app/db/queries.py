@@ -88,17 +88,17 @@ async def query_stock(pool: aiomysql.Pool, query: str = "") -> dict:
                 for r in godown_rows
             }
 
-            # True landed cost (from products table)
+            # True landed cost (from products table) — fixed for ONLY_FULL_GROUP_BY
             await cur.execute("""
                 SELECT p.sku_name, p.buy_price, p.sell_price,
-                       s.freight_per_sheet,
+                       MIN(s.freight_per_sheet) AS freight_per_sheet,
                        ROUND((p.sell_price - p.buy_price) / p.sell_price * 100, 1) AS margin_pct
                 FROM products p
                 JOIN po_items pi ON p.product_id=pi.product_id
                 JOIN purchase_orders po ON pi.po_id=po.po_id
                 JOIN suppliers s ON po.supplier_id=s.supplier_id
                 WHERE p.is_active=1
-                GROUP BY p.product_id
+                GROUP BY p.product_id, p.sku_name, p.buy_price, p.sell_price
                 LIMIT 8
             """)
             cost_rows = await cur.fetchall()
