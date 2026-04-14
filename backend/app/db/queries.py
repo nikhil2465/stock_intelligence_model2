@@ -313,7 +313,7 @@ async def query_demand(pool: aiomysql.Pool, query: str = "") -> dict:
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("""
-                SELECT p.sku_name, df.forecast_qty, df.actual_qty, df.signal
+                SELECT p.sku_name, df.forecast_qty, df.actual_qty, df.demand_signal
                 FROM demand_forecast df
                 JOIN products p ON df.product_id=p.product_id
                 WHERE df.forecast_month = DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
@@ -324,7 +324,7 @@ async def query_demand(pool: aiomysql.Pool, query: str = "") -> dict:
                 {
                     "sku": r["sku_name"],
                     "f30": int(r["forecast_qty"] or 0),
-                    "signal": r["signal"] or "STABLE",
+                    "signal": r["demand_signal"] or "STABLE",
                     "action": "Review stock levels based on forecast signal",
                 }
                 for r in rows

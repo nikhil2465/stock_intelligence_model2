@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS demand_forecast (
     forecast_month  DATE         NOT NULL,
     forecast_qty    INT,
     actual_qty      INT,
-    signal          VARCHAR(30),
+    demand_signal   VARCHAR(30),
     notes           VARCHAR(255),
     created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id),
@@ -404,7 +404,7 @@ INSERT IGNORE INTO freight_lanes (lane_id, lane_name, zone, distance_km, cost_pe
 INSERT IGNORE INTO finance_monthly (month_year, revenue, gross_profit, gross_margin_pct, gst_output, gst_itc, gst_net_payable, working_capital_days, dso_days, dio_days, dpo_days, outstanding_receivables, dead_stock_value, returns_value) VALUES
 (DATE_FORMAT(CURDATE(), '%Y-%m-01'), 2840000, 636000, 22.4, 511200, 428000, 83200, 48, 34, 22, 8, 1280000, 780000, 82000);
 
-INSERT IGNORE INTO demand_forecast (product_id, forecast_month, forecast_qty, actual_qty, signal) VALUES
+INSERT IGNORE INTO demand_forecast (product_id, forecast_month, forecast_qty, actual_qty, demand_signal) VALUES
 (1, DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01'), 596, NULL, 'SURGE +24%'),
 (2, DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01'), 432, NULL, 'GROWING +13.7%'),
 (3, DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01'), 448, NULL, 'STABLE +6.7%'),
